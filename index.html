@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marathon Trainer — Pace Planner, Split Tracker & Training Load for Windows</title>
+<meta name="description" content="Marathon Trainer: pace planner, split tracker, HR zone alerts, race-day countdown, and training load charts for marathon prep. Free and open source for Windows 10 / 11.">
+<style>
+  *,
+  *::before,
+  *::after { box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #070b18;
+    --bg-navy: #0d1430;
+    --bg-indigo: #1a1440;
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --text: #e8ecf7;
+    --text-dim: #9aa5c0;
+    --accent-a: #7c5cff;
+    --accent-b: #22d3ee;
+    --accent-c: #f472b6;
+    --card-bg: rgba(255, 255, 255, 0.04);
+    --radius: 18px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(124, 92, 255, 0.28), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(34, 211, 238, 0.18), transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(244, 114, 182, 0.12), transparent 45%),
+      linear-gradient(160deg, #070b18 0%, #0d1430 45%, #1a1440 100%);
+    background-attachment: fixed;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .wrap {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 14, 32, 0.55);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    height: 68px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    font-size: 1rem;
+    box-shadow: 0 6px 20px rgba(124, 92, 255, 0.45);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 0.92rem;
+    color: var(--text-dim);
+  }
+
+  .nav-links a {
+    transition: color 0.2s ease;
+    position: relative;
+  }
+
+  .nav-links a:hover { color: #fff; }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    transition: width 0.25s ease;
+  }
+
+  .nav-links a:hover::after { width: 100%; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 22px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    color: #0a0e1f;
+    background: linear-gradient(135deg, var(--accent-b), var(--accent-a));
+    box-shadow: 0 10px 30px rgba(124, 92, 255, 0.38);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 38px rgba(124, 92, 255, 0.5);
+  }
+
+  .btn-ghost {
+    color: var(--text);
+    background: var(--glass);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-sm { padding: 9px 18px; font-size: 0.88rem; }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 88px 0 72px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #cfd8f0;
+    backdrop-filter: blur(8px);
+  }
+
+  .pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-b);
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.18);
+  }
+
+  .hero h1 {
+    margin: 26px auto 0;
+    max-width: 880px;
+    font-size: clamp(2.2rem, 6vw, 4.1rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    background: linear-gradient(110deg, #ffffff 10%, #b7a8ff 45%, #6ee7f9 75%, #f472b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .hero p.lead {
+    max-width: 660px;
+    margin: 22px auto 0;
+    font-size: clamp(1rem, 2vw, 1.13rem);
+    color: var(--text-dim);
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 34px;
+  }
+
+  .hero-actions .btn { padding: 15px 30px; font-size: 1rem; border-radius: 14px; }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 46px;
+  }
+
+  .stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    font-size: 0.86rem;
+    color: var(--text-dim);
+    backdrop-filter: blur(8px);
+  }
+
+  .stat-chip strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* ---------- SECTION HEADERS ---------- */
+  section { padding: 76px 0; }
+
+  .section-head {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 52px;
+  }
+
+  .kicker {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-b);
+    margin-bottom: 14px;
+  }
+
+  .section-head h2 {
+    margin: 0;
+    font-size: clamp(1.7rem, 4vw, 2.5rem);
+    letter-spacing: -0.025em;
+    font-weight: 800;
+  }
+
+  .section-head p {
+    margin: 14px 0 0;
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    position: relative;
+    padding: 28px 24px 26px;
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  }
+
+  .feature-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+  }
+
+  .feature-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-b), #34d399); }
+  .feature-card:nth-child(3)::before { background: linear-gradient(90deg, #f472b6, var(--accent-a)); }
+  .feature-card:nth-child(4)::before { background: linear-gradient(90deg, #fbbf24, #f472b6); }
+  .feature-card:nth-child(5)::before { background: linear-gradient(90deg, #34d399, var(--accent-b)); }
+  .feature-card:nth-child(6)::before { background: linear-gradient(90deg, var(--accent-a), #f472b6); }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
+  }
+
+  .feature-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--glass-border);
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+  }
+
+  .feature-card h3 {
+    margin: 0 0 8px;
+    font-size: 1.06rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .feature-card p {
+    margin: 0;
+    font-size: 0.91rem;
+    color: var(--text-dim);
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+    padding-left: 8px;
+  }
+
+  .steps::before {
+    content: "";
+    position: absolute;
+    left: 31px;
+    top: 18px;
+    bottom: 18px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent-b), var(--accent-a), var(--accent-c));
+    opacity: 0.65;
+  }
+
+  .step {
+    position: relative;
+    display: flex;
+    gap: 24px;
+    padding: 0 0 38px 0;
+  }
+
+  .step:last-child { padding-bottom: 0; }
+
+  .step-num {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 1.02rem;
+    color: #0a0e1f;
+    background: linear-gradient(135deg, var(--accent-b), var(--accent-a));
+    box-shadow: 0 8px 24px rgba(124, 92, 255, 0.4);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-body {
+    padding-top: 4px;
+  }
+
+  .step-body h3 {
+    margin: 0 0 6px;
+    font-size: 1.08rem;
+    font-weight: 700;
+  }
+
+  .step-body p {
+    margin: 0;
+    font-size: 0.93rem;
+    color: var(--text-dim);
+    max-width: 520px;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq-list {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  details.faq-item {
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    transition: border-color 0.25s ease, background 0.25s ease;
+  }
+
+  details.faq-item[open] {
+    border-color: rgba(124, 92, 255, 0.5);
+    background: rgba(124, 92, 255, 0.07);
+  }
+
+  details.faq-item summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px 22px;
+    font-weight: 650;
+    font-size: 0.98rem;
+    user-select: none;
+  }
+
+  details.faq-item summary::-webkit-details-marker { display: none; }
+
+  .faq-icon {
+    flex: 0 0 auto;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    transition: transform 0.28s ease;
+  }
+
+  .faq-icon::before,
+  .faq-icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: var(--accent-b);
+    border-radius: 2px;
+    transform: translate(-50%, -50%);
+    transition: transform 0.28s ease, opacity 0.28s ease;
+  }
+
+  .faq-icon::before { width: 14px; height: 2px; }
+  .faq-icon::after { width: 2px; height: 14px; }
+
+  details.faq-item[open] .faq-icon { transform: rotate(45deg); }
+
+  .faq-answer {
+    padding: 0 22px 22px;
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    max-width: 92%;
+  }
+
+  /* ---------- CTA BANNER ---------- */
+  .cta-section { padding-top: 20px; }
+
+  .cta-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 64px 32px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(124, 92, 255, 0.18), rgba(34, 211, 238, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+
+  .cta-banner::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 640px;
+    height: 640px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 92, 255, 0.45), rgba(34, 211, 238, 0.12) 45%, transparent 68%);
+    pointer-events: none;
+  }
+
+  .cta-banner > * { position: relative; z-index: 1; }
+
+  .cta-banner h2 {
+    margin: 0 0 14px;
+    font-size: clamp(1.7rem, 4.4vw, 2.6rem);
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    background: linear-gradient(110deg, #ffffff, #b7a8ff 55%, #6ee7f9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .cta-banner p {
+    margin: 0 auto 30px;
+    max-width: 520px;
+    color: #c3cbe4;
+    font-size: 1rem;
+  }
+
+  .cta-banner .btn { padding: 16px 34px; font-size: 1.02rem; border-radius: 14px; }
+
+  .cta-note {
+    margin-top: 16px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid var(--glass-border);
+    padding: 34px 0 44px;
+    margin-top: 76px;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+  }
+
+  .footer-inner a {
+    color: #cfd8f0;
+    font-weight: 600;
+    transition: color 0.2s ease;
+  }
+
+  .footer-inner a:hover { color: var(--accent-b); }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 900px) {
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .nav-inner { height: 62px; }
+    .hero { padding: 60px 0 52px; }
+    .stats { gap: 10px; }
+    .stat-chip { font-size: 0.8rem; padding: 9px 15px; }
+    .features-grid { grid-template-columns: 1fr; }
+    section { padding: 56px 0; }
+    .step { gap: 16px; }
+    .steps::before { left: 23px; }
+    .step-num { width: 40px; height: 40px; font-size: 0.92rem; }
+    .cta-banner { padding: 48px 22px; }
+    .footer-inner { flex-direction: column; text-align: center; }
+    .hero-actions .btn { width: 100%; max-width: 320px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">🏃</span>
+        Marathon Trainer
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="https://gitscore.cc">Download</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main id="top">
+    <section class="hero">
+      <div class="wrap">
+        <span class="pill"><span class="dot"></span>Marathon prep, engineered</span>
+        <h1>Train smarter for the 26.2 with data on your side</h1>
+        <p class="lead">
+          Marathon Trainer turns your Windows PC into a full race-prep cockpit: build
+          pace plans, track every split, get heart-rate zone alerts, watch race-day
+          count down, and see your training load trend week over week.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://gitscore.cc">⬇ Download for Windows</a>
+          <a class="btn btn-ghost" href="https://gitscore.cc">★ View on GitHub</a>
+        </div>
+
+        <div class="stats">
+          <span class="stat-chip"><strong>48,200+</strong> downloads</span>
+          <span class="stat-chip"><strong>v2.4.1</strong> latest release</span>
+          <span class="stat-chip"><strong>Windows 10 / 11</strong></span>
+          <span class="stat-chip"><strong>Free &amp; open source</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="kicker">Features</span>
+          <h2>Everything your marathon block needs</h2>
+          <p>Six focused tools that replace the spreadsheet, the pace calculator, and the guesswork.</p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon">⏱️</div>
+            <h3>Pace Planner</h3>
+            <p>Set a goal time and get precise per-kilometre and per-mile splits, including negative-split and even-pace strategies.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Split Tracker</h3>
+            <p>Log each segment of a long run or race and instantly see where you gained or lost seconds against plan.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">❤️</div>
+            <h3>HR Zone Alerts</h3>
+            <p>Define your zones once and get real-time nudges when effort drifts too high on easy days or too low on tempo runs.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">🗓️</div>
+            <h3>Race-Day Countdown</h3>
+            <p>A live countdown to your goal race, with weekly mileage targets and taper reminders built into the plan.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Training Load Charts</h3>
+            <p>Track acute vs. chronic load so you can spot overreaching before it turns into an injury or a missed week.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Local &amp; Private</h3>
+            <p>All your runs and plans stay on your machine. No accounts, no cloud sync, no telemetry leaving your PC.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="kicker">How it works</span>
+          <h2>From install to race-day ready</h2>
+          <p>Three steps, about five minutes, and you have a full training block mapped out.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h3>Download and set your goal</h3>
+              <p>Grab the Windows build from the download page, open it, and enter your target race date plus goal finish time.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h3>Generate your pace and zone plan</h3>
+              <p>Marathon Trainer builds your split targets, heart-rate zones, and weekly load curve — then you adjust anything you like.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">3
