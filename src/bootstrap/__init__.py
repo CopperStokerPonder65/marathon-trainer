@@ -1,0 +1,1 @@
+"""Bootstrap layer: process attachment, config loading, signature resolution."""
