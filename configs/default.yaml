@@ -1,0 +1,42 @@
+# Marathon Trainer - default profile
+game:
+  process_name: "Marathon.exe"
+  supported_builds:
+    - "2026.1.0"
+    - "2026.2.1"
+    - "2026.3.0"
+  poll_interval_ms: 250
+
+trainer:
+  dry_run: false
+  log_level: INFO
+  safety_lock: true          # refuse writes when process is not foreground
+
+features:
+  infinite_health:
+    enabled: true
+    processor: health
+    value: 100
+  infinite_ammo:
+    enabled: true
+    processor: ammo
+    reserve_value: 999
+  movement:
+    enabled: false
+    processor: movement
+    gravity_scale: 0.0
+    jump_height: 1.8
+  overlay:
+    enabled: true
+    driver: overlay
+    fps: 60
+    show_position: true
+    show_health: true
+  telemetry:
+    enabled: true
+    driver: jsonl
+    path: logs/telemetry.jsonl
+
+hotkeys:
+  toggle_trainer: "F8"
+  panic_unload: "F12"
